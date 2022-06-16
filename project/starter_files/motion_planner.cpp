@@ -8,8 +8,8 @@
 
 MotionPlanner::~MotionPlanner() {}
 
-State MotionPlanner::get_goal_state_in_ego_frame(const State& ego_state,
-                                                 const State& goal_state) {
+State MotionPlanner::get_goal_state_in_ego_frame(const State &ego_state,
+                                                 const State &goal_state) {
   // Let's start by making a copy of the goal state (global reference frame)
   auto goal_state_ego_frame = goal_state;
 
@@ -58,8 +58,9 @@ State MotionPlanner::get_goal_state_in_ego_frame(const State& ego_state,
   return goal_state_ego_frame;
 }
 
-std::vector<State> MotionPlanner::generate_offset_goals_ego_frame(
-    const State& ego_state, const State& goal_state) {
+std::vector<State>
+MotionPlanner::generate_offset_goals_ego_frame(const State &ego_state,
+                                               const State &goal_state) {
   // Let's transform the "main" goal (goal state) into ego reference frame
   auto goal_state_ego_frame =
       get_goal_state_in_ego_frame(ego_state, goal_state);
@@ -67,13 +68,13 @@ std::vector<State> MotionPlanner::generate_offset_goals_ego_frame(
   return generate_offset_goals(goal_state_ego_frame);
 }
 
-std::vector<State> MotionPlanner::generate_offset_goals_global_frame(
-    const State& goal_state) {
+std::vector<State>
+MotionPlanner::generate_offset_goals_global_frame(const State &goal_state) {
   return generate_offset_goals(goal_state);
 }
 
-std::vector<State> MotionPlanner::generate_offset_goals(
-    const State& goal_state) {
+std::vector<State>
+MotionPlanner::generate_offset_goals(const State &goal_state) {
   // Now we need to gernerate "_num_paths" goals offset from the center goal at
   // a distance "_goal_offset".
   std::vector<State> goals_offset;
@@ -84,37 +85,36 @@ std::vector<State> MotionPlanner::generate_offset_goals(
 
   // TODO-Perpendicular direction: ADD pi/2 to the goal yaw
   // (goal_state.rotation.yaw)
-  //auto yaw = ;  // <- Fix This
+  auto yaw = goal_state.rotation.yaw + M_PI / 2; // ! FIXED
 
-  // LOG(INFO) << "MAIN GOAL";
-  // LOG(INFO) << "x: " << goal_state.location.x << " y: " <<
-  // goal_state.location.y
-  //          << " z: " << goal_state.location.z
-  //          << " yaw (rad): " << goal_state.rotation.yaw;
-  // LOG(INFO) << "OFFSET GOALS";
-  // LOG(INFO) << "ALL offset yaw (rad): " << yaw;
+  LOG(INFO) << "MAIN GOAL";
+  LOG(INFO) << "x: " << goal_state.location.x << " y: " << goal_state.location.y
+            << " z: " << goal_state.location.z
+            << " yaw (rad): " << goal_state.rotation.yaw;
+  LOG(INFO) << "OFFSET GOALS";
+  LOG(INFO) << "ALL offset yaw (rad): " << yaw;
 
   for (int i = 0; i < _num_paths; ++i) {
     auto goal_offset = goal_state;
     float offset = (i - (int)(_num_paths / 2)) * _goal_offset;
-    // LOG(INFO) << "Goal: " << i + 1;
-    // LOG(INFO) << "(int)(_num_paths / 2): " << (int)(_num_paths / 2);
-    // LOG(INFO) << "(i - (int)(_num_paths / 2)): " << (i - (int)(_num_paths /
-    // 2)); LOG(INFO) << "_goal_offset: " << _goal_offset;
+    LOG(INFO) << "Goal: " << i + 1;
+    LOG(INFO) << "(int)(_num_paths / 2): " << (int)(_num_paths / 2);
+    LOG(INFO) << "(i - (int)(_num_paths / 2)): " << (i - (int)(_num_paths / 2));
+    LOG(INFO) << "_goal_offset: " << _goal_offset;
 
-    // LOG(INFO) << "offset: " << offset;
+    LOG(INFO) << "offset: " << offset;
 
     // TODO-offset goal location: calculate the x and y position of the offset
     // goals using "offset" (calculated above) and knowing that the goals should
     // lie on a perpendicular line to the direction (yaw) of the main goal. You
     // calculated this direction above (yaw_plus_90). HINT: use
     // std::cos(yaw_plus_90) and std::sin(yaw_plus_90)
-    // goal_offset.location.x += ;  // <- Fix This
-    // goal_offset.location.y += ;  // <- Fix This
-    // LOG(INFO) << "x: " << goal_offset.location.x
-    //          << " y: " << goal_offset.location.y
-    //          << " z: " << goal_offset.location.z
-    //          << " yaw (rad): " << goal_offset.rotation.yaw;
+    goal_offset.location.x += offset * std::cos(yaw); // ! FIXED
+    goal_offset.location.y += offset * std::sin(yaw); // ! FIXED
+    LOG(INFO) << "x: " << goal_offset.location.x
+              << " y: " << goal_offset.location.y
+              << " z: " << goal_offset.location.z
+              << " yaw (rad): " << goal_offset.rotation.yaw;
 
     if (valid_goal(goal_state, goal_offset)) {
       goals_offset.push_back(goal_offset);
@@ -123,8 +123,8 @@ std::vector<State> MotionPlanner::generate_offset_goals(
   return goals_offset;
 }
 
-bool MotionPlanner::valid_goal(const State& main_goal,
-                               const State& offset_goal) {
+bool MotionPlanner::valid_goal(const State &main_goal,
+                               const State &offset_goal) {
   auto max_offset = ((int)(_num_paths / 2) + 1) * _goal_offset;
   // LOG(INFO) << "max offset: " << max_offset;
   auto dist = utils::magnitude(main_goal.location - offset_goal.location);
@@ -133,8 +133,8 @@ bool MotionPlanner::valid_goal(const State& main_goal,
 }
 
 std::vector<int> MotionPlanner::get_best_spiral_idx(
-    const std::vector<std::vector<PathPoint>>& spirals,
-    const std::vector<State>& obstacles, const State& goal_state) {
+    const std::vector<std::vector<PathPoint>> &spirals,
+    const std::vector<State> &obstacles, const State &goal_state) {
   // LOG(INFO) << "Num Spirals: " << spirals.size();
   double best_cost = DBL_MAX;
   std::vector<int> collisions;
@@ -160,8 +160,8 @@ std::vector<int> MotionPlanner::get_best_spiral_idx(
 
 std::vector<std::vector<PathPoint>>
 MotionPlanner::transform_spirals_to_global_frame(
-    const std::vector<std::vector<PathPoint>>& spirals,
-    const State& ego_state) {
+    const std::vector<std::vector<PathPoint>> &spirals,
+    const State &ego_state) {
   std::vector<std::vector<PathPoint>> transformed_spirals;
   for (auto spiral : spirals) {
     std::vector<PathPoint> transformed_single_spiral;
@@ -182,8 +182,9 @@ MotionPlanner::transform_spirals_to_global_frame(
   return transformed_spirals;
 }
 
-std::vector<std::vector<PathPoint>> MotionPlanner::generate_spirals(
-    const State& ego_state, const std::vector<State>& goals) {
+std::vector<std::vector<PathPoint>>
+MotionPlanner::generate_spirals(const State &ego_state,
+                                const std::vector<State> &goals) {
   // Since we are on Ego Frame, the start point is always at 0, 0, 0,
   PathPoint start;
   start.x = ego_state.location.x;
@@ -208,7 +209,7 @@ std::vector<std::vector<PathPoint>> MotionPlanner::generate_spirals(
     end.ddkappa = 0.0;
 
     if (_cubic_spiral.GenerateSpiral(start, end)) {
-      std::vector<PathPoint>* spiral = new std::vector<PathPoint>;
+      std::vector<PathPoint> *spiral = new std::vector<PathPoint>;
       auto ok = _cubic_spiral.GetSampledSpiral(P_NUM_POINTS_IN_SPIRAL, spiral);
       if (ok && valid_spiral(*spiral, goal)) {
         // LOG(INFO) << "Spiral Valid ";
@@ -223,8 +224,8 @@ std::vector<std::vector<PathPoint>> MotionPlanner::generate_spirals(
   return spirals;
 }
 
-bool MotionPlanner::valid_spiral(const std::vector<PathPoint>& spiral,
-                                 const State& offset_goal) {
+bool MotionPlanner::valid_spiral(const std::vector<PathPoint> &spiral,
+                                 const State &offset_goal) {
   auto n = spiral.size();
   auto delta_x = (offset_goal.location.x - spiral[n - 1].x);
   auto delta_y = (offset_goal.location.y - spiral[n - 1].y);
@@ -235,9 +236,9 @@ bool MotionPlanner::valid_spiral(const std::vector<PathPoint>& spiral,
   return (dist < 0.1);
 }
 
-float MotionPlanner::calculate_cost(const std::vector<PathPoint>& spiral,
-                                    const std::vector<State>& obstacles,
-                                    const State& goal) {
+float MotionPlanner::calculate_cost(const std::vector<PathPoint> &spiral,
+                                    const std::vector<State> &obstacles,
+                                    const State &goal) {
   // LOG(INFO) << "Starting spiral cost calc";
   // Initialize cost to 0.0
   float cost = 0.0;

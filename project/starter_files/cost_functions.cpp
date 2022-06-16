@@ -35,26 +35,28 @@ double diff_cost(vector<double> coeff, double duration,
   return cost_weight * cost;
 }
 
-double collision_circles_cost_spiral(const std::vector<PathPoint>& spiral,
-                                     const std::vector<State>& obstacles) {
+double collision_circles_cost_spiral(const std::vector<PathPoint> &spiral,
+                                     const std::vector<State> &obstacles) {
   bool collision{false};
   auto n_circles = CIRCLE_OFFSETS.size();
 
-  for (auto wp : spiral) {
+  for (auto &wp : spiral) {
     if (collision) {
       // LOG(INFO) << " ***** COLLISION DETECTED *********" << std::endl;
       break;
     }
     double cur_x = wp.x;
     double cur_y = wp.y;
-    double cur_yaw = wp.theta;  // This is already in rad.
+    double cur_yaw = wp.theta; // This is already in rad.
 
     for (size_t c = 0; c < n_circles && !collision; ++c) {
       // TODO-Circle placement: Where should the circles be at? The code below
       // is NOT complete. HINT: use CIRCLE_OFFSETS[c], sine and cosine to
       // calculate x and y: cur_y + CIRCLE_OFFSETS[c] * std::sin/cos(cur_yaw)
-      auto circle_center_x = 0;  // <- Update 
-      auto circle_center_y = 0;  // <- Update 
+      const auto circle_center_x =
+          cur_x + CIRCLE_OFFSETS[c] * std::cos(cur_yaw); // ! FIXED
+      const auto circle_center_y =
+          cur_y + CIRCLE_OFFSETS[c] * std::sin(cur_yaw); // ! FIXED
 
       for (auto obst : obstacles) {
         if (collision) {
@@ -70,7 +72,9 @@ double collision_circles_cost_spiral(const std::vector<PathPoint>& spiral,
           // TODO-Distance from circles to obstacles/actor: How do you calculate
           // the distance between the center of each circle and the
           // obstacle/actor
-          double dist = 0;  // <- Update
+          double dist = std::sqrt(
+              std::pow((circle_center_x - actor_center_x), 2) +
+              std::pow((circle_center_y - actor_center_y), 2)); // ! FIXED
 
           collision = (dist < (CIRCLE_RADII[c] + CIRCLE_RADII[c2]));
         }
@@ -80,7 +84,7 @@ double collision_circles_cost_spiral(const std::vector<PathPoint>& spiral,
   return (collision) ? COLLISION : 0.0;
 }
 
-double close_to_main_goal_cost_spiral(const std::vector<PathPoint>& spiral,
+double close_to_main_goal_cost_spiral(const std::vector<PathPoint> &spiral,
                                       State main_goal) {
   // The last point on the spiral should be used to check how close we are to
   // the Main (center) goal. That way, spirals that end closer to the lane
@@ -93,9 +97,9 @@ double close_to_main_goal_cost_spiral(const std::vector<PathPoint>& spiral,
   // 1].y and spiral[n - 1].z.
   // Use main_goal.location.x, main_goal.location.y and main_goal.location.z
   // Ex: main_goal.location.x - spiral[n - 1].x
-  auto delta_x = 0;  // <- Update
-  auto delta_y = 0;  // <- Update
-  auto delta_z = 0;  // <- Update
+  auto delta_x = main_goal.location.x - spiral[n - 1].x; // ! FIXED
+  auto delta_y = main_goal.location.y - spiral[n - 1].y; // ! FIXED
+  auto delta_z = main_goal.location.z - spiral[n - 1].z; // ! FIXED
 
   auto dist = std::sqrt((delta_x * delta_x) + (delta_y * delta_y) +
                         (delta_z * delta_z));
@@ -105,4 +109,4 @@ double close_to_main_goal_cost_spiral(const std::vector<PathPoint>& spiral,
   // LOG(INFO) << "cost (log): " << cost;
   return cost;
 }
-}  // namespace cost_functions
+} // namespace cost_functions
